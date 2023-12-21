@@ -4,9 +4,9 @@ const cardSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Поле name является обязательным'],
       minlength: [2, 'Минимальная длина 2 символа'],
       maxlength: [30, 'Максимальная длина 30 символов'],
+      required: [true, 'Поле name является обязательным'],
     },
     link: {
       type: String,

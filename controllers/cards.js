@@ -8,9 +8,9 @@ const getCards = async (req, res) => {
     return res.status(200).send(cards);
   } catch (error) {
     if (error.message === 'NotFoundError') {
-      return res.status(404).send({ message: 'Список карточек пуст' });
+      return res.status(404).send({ message: 'Список карточек пуст.' });
     }
-    return res.status(500).send({ message: 'Ошибка на стороне сервера' });
+    return res.status(500).send({ message: 'Ошибка на стороне сервера.' });
   }
 };
 
@@ -20,12 +20,12 @@ const deleteCard = async (req, res) => {
       () => new Error('NotFoundError'),
     );
 
-    return res.status(200).send({ message: 'Карточка была успешно удалена' });
+    return res.status(200).send({ message: 'Карточка была успешно удалена.' });
   } catch (error) {
     if (error.message === 'NotFoundError') {
-      return res.status(404).send({ message: 'Карточка не найдена' });
+      return res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
     }
-    return res.status(500).send({ message: 'Ошибка на стороне сервера' });
+    return res.status(500).send({ message: 'Ошибка на стороне сервера.' });
   }
 };
 
@@ -35,9 +35,49 @@ const createCard = async (req, res) => {
     return res.status(201).send(newCard);
   } catch (error) {
     if (error.name === 'ValidationError') {
-      return res.status(400).send({ message: 'Переданы не валидные данные', error: error.message });
+      return res.status(400).send({ message: 'Переданы некорректные данные при создании карточки.', error: error.message });
     }
-    return res.status(500).send({ message: 'Ошибка на стороне сервера' });
+    return res.status(500).send({ message: 'Ошибка на стороне сервера.' });
+  }
+};
+
+const likeCard = async (req, res) => {
+  try {
+    const likes = await Card.findByIdAndUpdate(
+      req.params.cardId,
+      { $addToSet: { likes: req.user._id } },
+      { new: true },
+    ).orFail(() => new Error('NotFoundError'));
+
+    return res.status(200).send(likes);
+  } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятии лайка.', error: error.message });
+    }
+    if (error.message === 'NotFoundError') {
+      return res.status(404).send({ message: 'Передан несуществующий _id карточки.' });
+    }
+    return res.status(500).send({ message: 'Ошибка на стороне сервера.' });
+  }
+};
+
+const dislikeCard = async (req, res) => {
+  try {
+    const likes = await Card.findByIdAndUpdate(
+      req.params.cardId,
+      { $pull: { likes: req.user._id } },
+      { new: true },
+    ).orFail(() => new Error('NotFoundError'));
+
+    return res.status(200).send(likes);
+  } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятии лайка.', error: error.message });
+    }
+    if (error.message === 'NotFoundError') {
+      return res.status(404).send({ message: 'Передан несуществующий _id карточки.' });
+    }
+    return res.status(500).send({ message: 'Ошибка на стороне сервера.' });
   }
 };
 
@@ -45,4 +85,6 @@ module.exports = {
   getCards,
   deleteCard,
   createCard,
+  likeCard,
+  dislikeCard,
 };
