@@ -1,6 +1,22 @@
-[![Tests](../../actions/workflows/tests-13-sprint.yml/badge.svg)](../../actions/workflows/tests-13-sprint.yml) [![Tests](../../actions/workflows/tests-14-sprint.yml/badge.svg)](../../actions/workflows/tests-14-sprint.yml)
 # Проект Mesto фронтенд + бэкенд
 
+Mesto Backend - это серверная часть приложения Mesto, предоставляющая API для работы с пользователями и карточками. Реализованная на Node.js и MongoDB, она обеспечивает взаимодействие с базой данных и обработку запросов клиентской части приложения Mesto.
+
+## Требования
+
+Перед началом убедитесь, что у вас установлены:
+
+- [Node.js](https://nodejs.org/)
+- [MongoDB](https://www.mongodb.com/)
+
+## Установка
+
+1. Клонируйте репозиторий:
+
+   ```bash
+   git clone SSH: git@github.com:Dmitry145528/express-mesto-gha.git
+   git clone https: https://github.com/Dmitry145528/express-mesto-gha.git
+   cd mesto-backend
 
 ## Директории
 
