@@ -18,11 +18,11 @@ const getCards = async (req, res) => {
 
 const deleteCard = async (req, res) => {
   try {
-    cards = await Card.findByIdAndDelete(req.params.cardId).orFail(
+    await Card.findByIdAndDelete(req.params.cardId).orFail(
       () => new Error('NotFoundError'),
     );
 
-    return res.status(200).send(cards);
+    return res.status(200).send();
   } catch (error) {
     if (error.message === 'NotFoundError') {
       return res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
