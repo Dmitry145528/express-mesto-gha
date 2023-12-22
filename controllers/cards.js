@@ -2,7 +2,8 @@ const Card = require('../models/card');
 
 const getCards = async (req, res) => {
   try {
-    const cards = await Card.find({}).orFail(
+    let cards = [];
+    cards = await Card.find({}).orFail(
       () => new Error('NotFoundError'),
     );
     return res.status(200).send(cards);
