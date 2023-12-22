@@ -20,10 +20,13 @@ const deleteCard = async (req, res) => {
       () => new Error('NotFoundError'),
     );
 
-    return res.status(200).send({ message: 'Карточка была успешно удалена.' });
+    return res.status(200).end();
   } catch (error) {
     if (error.message === 'NotFoundError') {
       return res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
+    }
+    if (error.name === 'CastError') {
+      return res.status(400).send({ message: 'Удаление карточки с некорректным id.' });
     }
     return res.status(500).send({ message: 'Ошибка на стороне сервера.' });
   }
