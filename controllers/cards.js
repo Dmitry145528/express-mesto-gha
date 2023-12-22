@@ -1,8 +1,9 @@
 const Card = require('../models/card');
 
+let cards = [];
+
 const getCards = async (req, res) => {
   try {
-    let cards = [];
     cards = await Card.find({}).orFail(
       () => new Error('NotFoundError'),
     );
@@ -17,17 +18,17 @@ const getCards = async (req, res) => {
 
 const deleteCard = async (req, res) => {
   try {
-    await Card.findByIdAndDelete(req.params.cardId).orFail(
+    cards = await Card.findByIdAndDelete(req.params.cardId).orFail(
       () => new Error('NotFoundError'),
     );
 
-    return res.status(200).end();
+    return res.status(200).send(cards);
   } catch (error) {
     if (error.message === 'NotFoundError') {
       return res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
     }
     if (error.name === 'CastError') {
-      return res.status(400).send({ message: 'Удаление карточки с некорректным id.' });
+      return res.status(400).send({ message: 'Передан не валидный ID.' });
     }
     return res.status(500).send({ message: 'Ошибка на стороне сервера.' });
   }
