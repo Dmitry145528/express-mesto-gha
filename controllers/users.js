@@ -1,16 +1,16 @@
+const http2 = require('http2');
+const { Error: MongooseError } = require('mongoose');
 const User = require('../models/user');
+
+const HTTP2_STATUS = http2.constants;
 
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find({}).orFail(
-      () => new Error('NotFoundError'),
-    );
-    return res.status(200).send(users);
+    const users = await User.find({});
+
+    return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send(users);
   } catch (error) {
-    if (error.message === 'NotFoundError') {
-      return res.status(404).send({ message: 'Список пользователей пуст.' });
-    }
-    return res.status(500).send({ message: 'Ошибка на стороне сервера.' });
+    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
   }
 };
 
@@ -21,27 +21,27 @@ const getUserById = async (req, res) => {
       () => new Error('NotFoundError'),
     );
 
-    return res.status(200).send(user);
+    return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send(user);
   } catch (error) {
     if (error.message === 'NotFoundError') {
-      return res.status(404).send({ message: 'Пользователь по указанному ID не найден.' });
+      return res.status(HTTP2_STATUS.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь по указанному ID не найден.' });
     }
-    if (error.name === 'CastError') {
-      return res.status(400).send({ message: 'Передан не валидный ID.' });
+    if (error instanceof MongooseError.CastError) {
+      return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Передан не валидный ID.' });
     }
-    return res.status(500).send({ message: 'Ошибка на стороне сервера.' });
+    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
   }
 };
 
 const createUser = async (req, res) => {
   try {
     const user = await User.create(req.body);
-    return res.status(201).send(user);
+    return res.status(HTTP2_STATUS.HTTP_STATUS_CREATED).send(user);
   } catch (error) {
-    if (error.name === 'ValidationError') {
-      return res.status(400).send({ message: 'Переданы некорректные данные при создании пользователя.', error: error.message });
+    if (error instanceof MongooseError.ValidationError) {
+      return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании пользователя.', error: error.message });
     }
-    return res.status(500).send({ message: 'Ошибка на стороне сервера.' });
+    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
   }
 };
 
@@ -56,15 +56,15 @@ const updateUser = async (req, res) => {
       { new: true, runValidators: true },
     ).orFail(() => new Error('NotFoundError'));
 
-    return res.status(200).send(userUpdate);
+    return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send(userUpdate);
   } catch (error) {
     if (error.message === 'NotFoundError') {
-      return res.status(404).send({ message: 'Пользователь по указанному ID не найден.' });
+      return res.status(HTTP2_STATUS.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь по указанному ID не найден.' });
     }
-    if (error.name === 'ValidationError') {
-      return res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля.', error: error.message });
+    if (error instanceof MongooseError.ValidationError) {
+      return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные при обновлении профиля.', error: error.message });
     }
-    return res.status(500).send({ message: 'Ошибка на стороне сервера.' });
+    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
   }
 };
 
@@ -78,15 +78,15 @@ const updateAvatar = async (req, res) => {
       () => new Error('NotFoundError'),
     );
 
-    return res.status(200).send(avatarUpdate);
+    return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send(avatarUpdate);
   } catch (error) {
     if (error.message === 'NotFoundError') {
-      return res.status(404).send({ message: 'Пользователь по указанному ID не найден' });
+      return res.status(HTTP2_STATUS.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь по указанному ID не найден' });
     }
-    if (error.name === 'ValidationError') {
-      return res.status(400).send({ message: 'Переданы некорректные данные при обновлении аватара.', error: error.message });
+    if (error instanceof MongooseError.ValidationError) {
+      return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные при обновлении аватара.', error: error.message });
     }
-    return res.status(500).send({ message: 'Ошибка на стороне сервера' });
+    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера' });
   }
 };
 
