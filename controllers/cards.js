@@ -18,14 +18,14 @@ const getCards = async (req, res) => {
 
 const deleteCard = async (req, res) => {
   try {
-    await Card.findByIdAndDelete(req.params.cardId).orFail(
+    await Card.findOneAndDelete({ _id: req.params.cardId, owner: req.user._id }).orFail(
       () => new Error('NotFoundError'),
     );
 
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send({ message: 'Карточка успешно удалена.' });
   } catch (error) {
     if (error.message === 'NotFoundError') {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена.' });
+      return res.status(HTTP2_STATUS.HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена или у вас нет прав на удаление.' });
     }
     if (error instanceof MongooseError.CastError) {
       return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Передан не валидный ID.' });

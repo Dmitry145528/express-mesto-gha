@@ -3,9 +3,8 @@ const jwt = require('jsonwebtoken');
 
 const HTTP2_STATUS = http2.constants;
 
-const verifyToken = (req, res, next) => {
+module.exports = (req, res, next) => {
   const { authorization } = req.headers;
-
   if (!authorization || !authorization.startsWith('Bearer ')) {
     return res
       .status(HTTP2_STATUS.HTTP_STATUS_UNAUTHORIZED)
@@ -27,8 +26,4 @@ const verifyToken = (req, res, next) => {
 
   next();
   return null;
-};
-
-module.exports = {
-  verifyToken,
 };
