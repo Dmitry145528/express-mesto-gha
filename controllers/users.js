@@ -3,6 +3,9 @@ const { Error: MongooseError } = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const { BadRequestError } = require('../errors/BadRequestError');
+const { ConflictError } = require('../errors/ConflictError');
+const { NotFoundError } = require('../errors/NotFoundError');
 
 const HTTP2_STATUS = http2.constants;
 
@@ -16,7 +19,7 @@ const getUsers = async (req, res) => {
   }
 };
 
-const getUserById = async (req, res) => {
+const getUserById = async (req, res, next) => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId).orFail(
@@ -26,16 +29,16 @@ const getUserById = async (req, res) => {
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send(user);
   } catch (error) {
     if (error.message === 'NotFoundError') {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь по указанному ID не найден.' });
+      return next(new NotFoundError('Пользователь по указанному ID не найден.'));
     }
     if (error instanceof MongooseError.CastError) {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Передан не валидный ID.' });
+      return next(new BadRequestError('Передан не валидный ID.'));
     }
-    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
+    return next(error);
   }
 };
 
-const createUser = async (req, res) => {
+const createUser = async (req, res, next) => {
   try {
     // Хеширование пароля перед созданием пользователя
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
@@ -51,9 +54,12 @@ const createUser = async (req, res) => {
     return res.status(HTTP2_STATUS.HTTP_STATUS_CREATED).send(user);
   } catch (error) {
     if (error instanceof MongooseError.ValidationError) {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании пользователя.', error: error.message });
+      return next(new BadRequestError('Переданы некорректные данные при создании пользователя.'));
     }
-    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
+    if (error.code === 11000) {
+      return next(new ConflictError('Пользователь с таким email уже существует'));
+    }
+    return next(error);
   }
 };
 
