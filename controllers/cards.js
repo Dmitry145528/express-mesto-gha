@@ -3,6 +3,7 @@ const { Error: MongooseError } = require('mongoose');
 const Card = require('../models/card');
 const { NotFoundError } = require('../errors/NotFoundError');
 const { BadRequestError } = require('../errors/BadRequestError');
+const { ForbiddenError } = require('../errors/ForbiddenError');
 
 const HTTP2_STATUS = http2.constants;
 
@@ -20,14 +21,24 @@ const getCards = async (req, res, next) => {
 
 const deleteCard = async (req, res, next) => {
   try {
-    await Card.findOneAndDelete({ _id: req.params.cardId, owner: req.user._id }).orFail(
+    const card = await Card.findOne({ _id: req.params.cardId });
+
+    if (!card) {
+      return next(new NotFoundError('Карточка с указанным _id не найдена.'));
+    }
+
+    if (card.owner.toString() !== req.user._id) {
+      return next(new ForbiddenError('У вас нет прав на удаление этой карточки.'));
+    }
+
+    await Card.findOneAndDelete({ _id: req.params.cardId }).orFail(
       () => new Error('NotFoundError'),
     );
 
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send({ message: 'Карточка успешно удалена.' });
   } catch (error) {
     if (error.message === 'NotFoundError') {
-      return next(new NotFoundError('Карточка с указанным _id не найдена или у вас нет прав на удаление.'));
+      return next(new NotFoundError('Карточка с указанным _id не найдена'));
     }
     if (error instanceof MongooseError.CastError) {
       return next(new BadRequestError('Передан не валидный ID.'));
