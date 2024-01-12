@@ -6,16 +6,17 @@ const User = require('../models/user');
 const { BadRequestError } = require('../errors/BadRequestError');
 const { ConflictError } = require('../errors/ConflictError');
 const { NotFoundError } = require('../errors/NotFoundError');
+const { UnauthorizedError } = require('../errors/UnauthorizedError');
 
 const HTTP2_STATUS = http2.constants;
 
-const getUsers = async (req, res) => {
+const getUsers = async (req, res, next) => {
   try {
     const users = await User.find({});
 
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send(users);
   } catch (error) {
-    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
+    return next(error);
   }
 };
 
@@ -63,7 +64,7 @@ const createUser = async (req, res, next) => {
   }
 };
 
-const updateUser = async (req, res) => {
+const updateUser = async (req, res, next) => {
   try {
     const userUpdate = await User.findByIdAndUpdate(
       req.user._id,
@@ -77,16 +78,16 @@ const updateUser = async (req, res) => {
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send(userUpdate);
   } catch (error) {
     if (error.message === 'NotFoundError') {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь по указанному ID не найден.' });
+      return next(new NotFoundError('Пользователь по указанному ID не найден.'));
     }
     if (error instanceof MongooseError.ValidationError) {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные при обновлении профиля.', error: error.message });
+      return next(new BadRequestError('Переданы некорректные данные при обновлении профиля.'));
     }
-    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
+    return next(error);
   }
 };
 
-const updateAvatar = async (req, res) => {
+const updateAvatar = async (req, res, next) => {
   try {
     const avatarUpdate = await User.findByIdAndUpdate(
       req.user._id,
@@ -99,29 +100,29 @@ const updateAvatar = async (req, res) => {
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send(avatarUpdate);
   } catch (error) {
     if (error.message === 'NotFoundError') {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь по указанному ID не найден' });
+      return next(new NotFoundError('Пользователь по указанному ID не найден.'));
     }
     if (error instanceof MongooseError.ValidationError) {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные при обновлении аватара.', error: error.message });
+      return next(new BadRequestError('Переданы некорректные данные при обновлении аватара.'));
     }
-    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера' });
+    return next(error);
   }
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
-      throw new Error('Неправильные почта или пароль');
+      return next(new UnauthorizedError('Неправильные почта или пароль'));
     }
 
     const matched = await bcrypt.compare(password, user.password);
 
     if (!matched) {
-      throw new Error('Неправильные почта или пароль');
+      return next(new UnauthorizedError('Неправильные почта или пароль'));
     }
 
     const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
@@ -129,20 +130,20 @@ const login = async (req, res) => {
 
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send({ token });
   } catch (error) {
-    return res.status(HTTP2_STATUS.HTTP_STATUS_UNAUTHORIZED).send({ message: error.message });
+    return next(new UnauthorizedError('Необходима авторизация'));
   }
 };
 
-const getMyProfile = async (req, res) => {
+const getMyProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
 
     if (!user) {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_NOT_FOUND).send({ message: 'Текущий пользователь не найден.' });
+      return next(new NotFoundError('Текущий пользователь не найден.'));
     }
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send(user);
   } catch (error) {
-    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
+    return next(error);
   }
 };
 

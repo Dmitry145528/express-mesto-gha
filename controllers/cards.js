@@ -1,22 +1,24 @@
 const http2 = require('http2');
 const { Error: MongooseError } = require('mongoose');
 const Card = require('../models/card');
+const { NotFoundError } = require('../errors/NotFoundError');
+const { BadRequestError } = require('../errors/BadRequestError');
 
 const HTTP2_STATUS = http2.constants;
 
 let cards = [];
 
-const getCards = async (req, res) => {
+const getCards = async (req, res, next) => {
   try {
     cards = await Card.find({});
 
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send(cards);
   } catch (error) {
-    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
+    return next(error);
   }
 };
 
-const deleteCard = async (req, res) => {
+const deleteCard = async (req, res, next) => {
   try {
     await Card.findOneAndDelete({ _id: req.params.cardId, owner: req.user._id }).orFail(
       () => new Error('NotFoundError'),
@@ -25,28 +27,28 @@ const deleteCard = async (req, res) => {
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send({ message: 'Карточка успешно удалена.' });
   } catch (error) {
     if (error.message === 'NotFoundError') {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена или у вас нет прав на удаление.' });
+      return next(new NotFoundError('Карточка с указанным _id не найдена или у вас нет прав на удаление.'));
     }
     if (error instanceof MongooseError.CastError) {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Передан не валидный ID.' });
+      return next(new BadRequestError('Передан не валидный ID.'));
     }
-    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
+    return next(error);
   }
 };
 
-const createCard = async (req, res) => {
+const createCard = async (req, res, next) => {
   try {
     const newCard = await Card.create({ ...req.body, owner: req.user._id });
     return res.status(HTTP2_STATUS.HTTP_STATUS_CREATED).send(newCard);
   } catch (error) {
     if (error instanceof MongooseError.ValidationError) {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки.', error: error.message });
+      return next(new BadRequestError('Переданы некорректные данные при создании карточки.'));
     }
-    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
+    return next(error);
   }
 };
 
-const likeCard = async (req, res) => {
+const likeCard = async (req, res, next) => {
   try {
     const likes = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -57,16 +59,16 @@ const likeCard = async (req, res) => {
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send(likes);
   } catch (error) {
     if (error instanceof MongooseError.CastError) {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки/снятии лайка.', error: error.message });
+      return next(new BadRequestError('Переданы некорректные данные для постановки/снятии лайка.'));
     }
     if (error.message === 'NotFoundError') {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' });
+      return next(new NotFoundError('Передан несуществующий _id карточки.'));
     }
-    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
+    return next(error);
   }
 };
 
-const dislikeCard = async (req, res) => {
+const dislikeCard = async (req, res, next) => {
   try {
     const likes = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -77,12 +79,12 @@ const dislikeCard = async (req, res) => {
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send(likes);
   } catch (error) {
     if (error instanceof MongooseError.CastError) {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки/снятии лайка.', error: error.message });
+      return next(new BadRequestError('Переданы некорректные данные для постановки/снятии лайка.'));
     }
     if (error.message === 'NotFoundError') {
-      return res.status(HTTP2_STATUS.HTTP_STATUS_NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' });
+      return next(new NotFoundError('Передан несуществующий _id карточки.'));
     }
-    return res.status(HTTP2_STATUS.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на стороне сервера.' });
+    return next(error);
   }
 };
 
