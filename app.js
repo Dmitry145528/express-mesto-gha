@@ -1,4 +1,5 @@
 const express = require('express');
+require('dotenv').config();
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const { celebrate, Joi } = require('celebrate');
@@ -8,12 +9,11 @@ const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const { errorHandler } = require('./errors/errorHandler');
 
-// Слушаем 3000 порт
-const { PORT = 3000 } = process.env;
+const { PORT, MONGO_URL } = process.env;
 
 const app = express();
 
-mongoose.connect('mongodb://127.0.0.1:27017/mestodb');
+mongoose.connect(MONGO_URL);
 
 app.use(express.json());
 app.use(cookieParser());

@@ -8,6 +8,8 @@ const { ConflictError } = require('../errors/ConflictError');
 const { NotFoundError } = require('../errors/NotFoundError');
 const { UnauthorizedError } = require('../errors/UnauthorizedError');
 
+const { SECRET_KEY } = process.env;
+const MONGO_ERROR_CODE_DUPLICATE = 11000;
 const HTTP2_STATUS = http2.constants;
 
 const getUsers = async (req, res, next) => {
@@ -57,7 +59,7 @@ const createUser = async (req, res, next) => {
     if (error instanceof MongooseError.ValidationError) {
       return next(new BadRequestError('Переданы некорректные данные при создании пользователя.'));
     }
-    if (error.code === 11000) {
+    if (error.code === MONGO_ERROR_CODE_DUPLICATE) {
       return next(new ConflictError('Пользователь с таким email уже существует'));
     }
     return next(error);
@@ -125,7 +127,7 @@ const login = async (req, res, next) => {
       return next(new UnauthorizedError('Неправильные почта или пароль'));
     }
 
-    const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+    const token = jwt.sign({ _id: user._id }, SECRET_KEY, { expiresIn: '7d' });
     res.cookie('jwt', token, { httpOnly: true, maxAge: 3600000 * 24 * 7 });
 
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send({ token });
