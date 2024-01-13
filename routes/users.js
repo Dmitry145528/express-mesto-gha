@@ -10,7 +10,11 @@ const {
 
 userRouter.get('/', getUsers);
 userRouter.get('/me', getMyProfile);
-userRouter.get('/:userId', getUserById);
+userRouter.get('/:userId', celebrate({
+  params: Joi.object({
+    cardId: Joi.string().hex().length(24).required(),
+  }),
+}), getUserById);
 userRouter.patch('/me', celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
