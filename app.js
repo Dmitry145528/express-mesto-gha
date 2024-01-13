@@ -12,8 +12,7 @@ const { errorHandler } = require('./errors/errorHandler');
 const { PORT, MONGO_URL } = process.env;
 
 const app = express();
-
-mongoose.connect(MONGO_URL);
+mongoose.connect(MONGO_URL || 'mongodb://127.0.0.1:27017/mestodb');
 
 app.use(express.json());
 app.use(cookieParser());
@@ -42,4 +41,4 @@ app.use('/', router);
 app.use(errors());
 app.use(errorHandler);
 
-app.listen(PORT);
+app.listen(PORT || 3000);
