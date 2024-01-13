@@ -127,7 +127,7 @@ const login = async (req, res, next) => {
       return next(new UnauthorizedError('Неправильные почта или пароль'));
     }
 
-    const token = jwt.sign({ _id: user._id }, SECRET_KEY, { expiresIn: '7d' });
+    const token = jwt.sign({ _id: user._id }, SECRET_KEY || 'some-secret-key', { expiresIn: '7d' });
     res.cookie('jwt', token, { httpOnly: true, maxAge: 3600000 * 24 * 7 });
 
     return res.status(HTTP2_STATUS.HTTP_STATUS_OK).send({ token });
