@@ -8,6 +8,7 @@ const router = require('./routes/routes');
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const { errorHandler } = require('./errors/errorHandler');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 const { PORT, MONGO_URL } = process.env;
 
@@ -16,6 +17,8 @@ mongoose.connect(MONGO_URL || 'mongodb://127.0.0.1:27017/mestodb');
 
 app.use(express.json());
 app.use(cookieParser());
+
+app.use(requestLogger); // подключаем логгер запросов
 
 app.post('/signin', celebrate({
   body: Joi.object().keys({
@@ -37,6 +40,8 @@ app.post('/signup', celebrate({
 
 app.use(auth);
 app.use('/', router);
+
+app.use(errorLogger); // подключаем логгер ошибок
 
 app.use(errors());
 app.use(errorHandler);
