@@ -79,4 +79,4 @@ Mesto Backend - это серверная часть приложения Mesto,
 
 ✅ _Завершено_
 
-Дальнейшая разработка ведётся в репозитории [Mesto (версия с фронтендом и бэкендом))](https://github.com/Dmitry145528/react-mesto-api-full-gha)
+Дальнейшая разработка ведётся в репозитории [Mesto (версия с фронтендом и бэкендом)](https://github.com/Dmitry145528/react-mesto-api-full-gha)
